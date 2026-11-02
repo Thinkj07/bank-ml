@@ -33,7 +33,10 @@ Notebook gồm các bước:
 ml_assign/
 ├── bank-full.csv
 ├── pre_processing.ipynb
+├── pre_processing.py
 ├── cleaned_bank_data.csv
+├── outputs/
+│   └── plots/
 └── README.md
 ```
 
@@ -69,7 +72,17 @@ python -m pip install numpy pandas matplotlib seaborn scikit-learn imbalanced-le
 
 ## 6. Hướng dẫn chạy
 
-### Cách 1: Chạy bằng Jupyter Notebook
+### Chạy bằng script Python
+
+Mở PowerShell tại thư mục dự án và chạy:
+
+```powershell
+python pre_processing.py
+```
+
+Script thực hiện cùng pipeline với notebook, hiển thị các bảng/biểu đồ, áp dụng SMOTE trên tập train và tạo `cleaned_bank_data.csv`. Các biểu đồ được lưu tự động trong `outputs/plots/`.
+
+### Chạy bằng Jupyter Notebook
 
 Từ thư mục `ml_assign`, chạy:
 
@@ -84,7 +97,7 @@ Sau đó:
 3. Chạy lần lượt các cell từ trên xuống dưới bằng `Run All`.
 4. Kiểm tra các bảng và biểu đồ kết quả.
 
-### Cách 2: Chạy bằng JupyterLab
+### Chạy bằng JupyterLab
 
 ```powershell
 jupyter lab
@@ -140,3 +153,17 @@ File này chứa dữ liệu đã:
 - Chuẩn hóa biến số.
 
 Nếu `cleaned_bank_data.csv` đang mở trong Excel hoặc chương trình khác, hãy đóng file trước khi chạy cell xuất dữ liệu để tránh lỗi `PermissionError`.
+
+Các biểu đồ được xuất dưới dạng PNG với tên theo thứ tự pipeline:
+
+```text
+outputs/plots/
+├── 01_missing_unknown_rate.png
+├── 02_outliers_before_capping.png
+├── 03_outliers_after_capping.png
+├── 04_features_before_after_encoding.png
+├── 05_distributions_before_after_scaling.png
+├── 06_correlation_heatmap.png
+├── 07_target_distribution_before_smote.png
+└── 08_train_distribution_before_after_smote.png
+```

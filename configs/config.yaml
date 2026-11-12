@@ -1,0 +1,10 @@
+random_state: 42
+test_size: 0.2
+drop_duration: true
+target: y
+paths:
+  raw: data/raw/bank-full.csv
+  processed: data/processed
+  results: reports/results/results.csv
+numeric_columns: [age, balance, day, duration, campaign, pdays, previous]
+capping_columns: [age, balance, day, duration, campaign]

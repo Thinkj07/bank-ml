@@ -1,169 +1,76 @@
-# Bank Marketing - Tiền xử lý dữ liệu
+# Bank Marketing - Bài tập lớn Học máy (CO3117)
 
-## 1. Giới thiệu
+Dự đoán khách hàng có đăng ký tiền gửi kỳ hạn hay không (biến mục tiêu `y`, 1 là có). Dữ liệu: [Bank Marketing, UCI](https://archive.ics.uci.edu/dataset/222/bank), file `bank-full.csv`.
 
-Dự án thực hiện quy trình tiền xử lý cho bộ dữ liệu **Bank Marketing**. Mục tiêu là chuẩn bị dữ liệu cho các mô hình Machine Learning dự đoán khách hàng có đăng ký tiền gửi kỳ hạn hay không.
-
-Biến mục tiêu:
-
-- `y = 0`: khách hàng không đăng ký.
-- `y = 1`: khách hàng đăng ký.
-
-Notebook chính: [pre_processing.ipynb](./pre_processing.ipynb)
-
-## 2. Nội dung thực hiện
-
-Notebook gồm các bước:
-
-1. Tải dữ liệu từ `bank-full.csv`
-2. Kiểm tra cấu trúc dữ liệu, kích thước và kiểu dữ liệu.
-3. Kiểm tra giá trị thiếu `NaN/Null` và giá trị ẩn `unknown`.
-4. Xử lý dữ liệu trùng lặp.
-5. Phát hiện và capping ngoại lệ bằng phương pháp IQR.
-6. Mã hóa biến phân loại
-7. Chuẩn hóa các biến số bằng `RobustScaler`.
-8. Phân tích tương quan và đa cộng tuyến.
-9. Tách dữ liệu train/test với `stratify=y`.
-10. Cân bằng lớp bằng SMOTE chỉ trên tập train để tránh Data Leakage.
-11. Xuất dữ liệu đã xử lý ra file CSV.
-
-## 3. Cấu trúc thư mục
+## Cấu trúc thư mục
 
 ```text
-ml_assign/
-├── bank-full.csv
-├── pre_processing.ipynb
-├── pre_processing.py
-├── cleaned_bank_data.csv
-├── outputs/
-│   └── plots/
-└── README.md
+configs/config.yaml     tham số dùng chung (seed, tỷ lệ chia, drop_duration)
+data/raw/               dữ liệu gốc
+data/processed/         train.csv và test.csv đã chia sẵn, dùng chung cho cả nhóm
+src/                    code dùng lại: preprocessing, data, evaluate, models
+scripts/                make_dataset.py tạo train/test
+notebooks/              mỗi người một notebook riêng
+models/                 model đã huấn luyện (không commit)
+reports/                figures, results, report, slides
+docs/                   kế hoạch và tài liệu nhóm
+legacy/                 bản tiền xử lý cũ, giữ để tham khảo
 ```
 
-`cleaned_bank_data.csv` được tạo sau khi chạy notebook thành công.
+## Cài đặt
 
-## 4. Yêu cầu môi trường
-
-- Python 3.10 trở lên
-- Jupyter Notebook hoặc JupyterLab
-- Các thư viện:
-  - numpy
-  - pandas
-  - matplotlib
-  - seaborn
-  - scikit-learn
-  - imbalanced-learn
-
-## 5. Cài đặt thư viện
-
-Mở PowerShell tại thư mục dự án và chạy:
-
-```powershell
-python -m pip install numpy pandas matplotlib seaborn scikit-learn imbalanced-learn jupyter
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
-Nếu dự án sử dụng virtual environment:
+Trên Windows PowerShell, kích hoạt bằng `.venv\Scripts\Activate.ps1`.
 
-```powershell
-python -m venv venv
-.\venv\Scripts\Activate.ps1
-python -m pip install numpy pandas matplotlib seaborn scikit-learn imbalanced-learn jupyter
-```
+## Dữ liệu train/test dùng chung
 
-## 6. Hướng dẫn chạy
-
-### Chạy bằng script Python
-
-Mở PowerShell tại thư mục dự án và chạy:
-
-```powershell
-python pre_processing.py
-```
-
-Script thực hiện cùng pipeline với notebook, hiển thị các bảng/biểu đồ, áp dụng SMOTE trên tập train và tạo `cleaned_bank_data.csv`. Các biểu đồ được lưu tự động trong `outputs/plots/`.
-
-### Chạy bằng Jupyter Notebook
-
-Từ thư mục `ml_assign`, chạy:
-
-```powershell
-jupyter notebook
-```
-
-Sau đó:
-
-1. Mở file `pre_processing.ipynb`.
-2. Chọn đúng Python kernel đã cài các thư viện.
-3. Chạy lần lượt các cell từ trên xuống dưới bằng `Run All`.
-4. Kiểm tra các bảng và biểu đồ kết quả.
-
-### Chạy bằng JupyterLab
-
-```powershell
-jupyter lab
-```
-
-Mở `pre_processing.ipynb` và chạy toàn bộ notebook.
-
-## 7. Xử lý mất cân bằng lớp và Data Leakage
-
-Dữ liệu ban đầu có tỷ lệ khoảng:
-
-- `no`: 88%.
-- `yes`: 12%.
-
-Notebook thực hiện tách train/test trước:
+`data/processed/train.csv` và `data/processed/test.csv` đã được commit, cả nhóm dùng đúng hai file này. Không tự chia lại dữ liệu.
 
 ```python
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y,
-    test_size=0.2,
-    random_state=42,
-    stratify=y
-)
+from src.data import load_train_test
+
+X_train, X_test, y_train, y_test = load_train_test()
 ```
 
-SMOTE chỉ được áp dụng trên tập train:
+Quy trình tạo hai file:
+
+1. Đọc dữ liệu gốc, bỏ dòng trùng, mã hóa biến phân loại.
+2. Chia train/test 80/20 với `stratify=y` và `random_state=42`.
+3. Fit việc cắt ngoại lệ IQR và `RobustScaler` chỉ trên train, sau đó áp dụng sang test.
+
+SMOTE không nằm trong file. Chỉ áp dụng SMOTE trên train, và nếu dùng cross-validation thì phải đặt SMOTE trong `imblearn.pipeline.Pipeline` để nó chỉ chạy trên fold train:
 
 ```python
-smote = SMOTE(random_state=42)
-X_train_resampled, y_train_resampled = smote.fit_resample(
-    X_train,
-    y_train
-)
+from src.data import smote_resample
+
+X_res, y_res = smote_resample(X_train, y_train)
 ```
 
-Không áp dụng SMOTE lên `X_test` hoặc `y_test`. Tập test phải giữ phân phối thực tế để đánh giá mô hình khách quan. Khi huấn luyện mô hình, nên ưu tiên F1-Score, Precision, Recall và PR-AUC thay vì chỉ sử dụng Accuracy.
+Chỉ A được tạo lại hai file này bằng `python -m scripts.make_dataset`, và phải báo cả nhóm để mọi người huấn luyện lại.
 
-## 8. Kết quả đầu ra
+## Đánh giá mô hình
 
-Sau khi chạy thành công, notebook tạo:
+```python
+from src.evaluate import evaluate, log_result
 
-```text
-cleaned_bank_data.csv
+metrics = evaluate(model, X_test, y_test)
+log_result("logreg_baseline", metrics)
 ```
 
-File này chứa dữ liệu đã:
+Kết quả được ghi vào `reports/results/results.csv`, dùng chung để so sánh mô hình.
 
-- Xử lý giá trị thiếu.
-- Giữ lại các nhóm `unknown` có ý nghĩa.
-- Xử lý dòng trùng lặp.
-- Capping một số ngoại lệ theo IQR.
-- Mã hóa biến phân loại.
-- Chuẩn hóa biến số.
+## Quy ước làm việc
 
-Nếu `cleaned_bank_data.csv` đang mở trong Excel hoặc chương trình khác, hãy đóng file trước khi chạy cell xuất dữ liệu để tránh lỗi `PermissionError`.
+- Không commit trực tiếp lên `main`. Mỗi người làm trên nhánh riêng (`feat/a-preprocessing`, `feat/b-logreg`, `feat/c-rf`, `feat/d-advanced`) và mở Pull Request cho người khác review.
+- Cài `nbstripout` một lần để notebook không lưu output: `nbstripout --install`.
+- Mô hình mới thêm vào `src/models/<ten>.py` với hàm `build(**params)`.
+- Metric chính: F1 của lớp dương, báo thêm precision, recall, PR-AUC, ROC-AUC.
 
-Các biểu đồ được xuất dưới dạng PNG với tên theo thứ tự pipeline:
+## Ghi chú về `duration`
 
-```text
-outputs/plots/
-├── 01_missing_unknown_rate.png
-├── 02_outliers_before_capping.png
-├── 03_outliers_after_capping.png
-├── 04_features_before_after_encoding.png
-├── 05_distributions_before_after_scaling.png
-├── 06_correlation_heatmap.png
-├── 07_target_distribution_before_smote.png
-└── 08_train_distribution_before_after_smote.png
-```
+`configs/config.yaml` có `drop_duration: true`. Cột `duration` (thời lượng cuộc gọi) chỉ biết sau khi cuộc gọi kết thúc nên mặc định được loại bỏ. Đổi giá trị này phải được cả nhóm thống nhất rồi chạy lại `make_dataset`.

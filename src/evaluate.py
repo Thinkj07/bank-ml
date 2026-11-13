@@ -11,12 +11,15 @@ from sklearn.metrics import (
 from src.config import ROOT, load_config
 
 
-def evaluate(model, X, y):
+def evaluate(model, X, y, threshold=None):
     if hasattr(model, "predict_proba"):
         score = model.predict_proba(X)[:, 1]
     else:
         score = model.decision_function(X)
-    pred = model.predict(X)
+    if threshold is None:
+        pred = model.predict(X)
+    else:
+        pred = (score >= threshold).astype(int)
     return {
         "accuracy": accuracy_score(y, pred),
         "precision": precision_score(y, pred, zero_division=0),
@@ -29,7 +32,11 @@ def evaluate(model, X, y):
 
 def log_result(name, metrics):
     path = ROOT / load_config()["paths"]["results"]
-    row = pd.DataFrame([{"model": name, **metrics}])
+    row = {"model": name}
+    row.update(metrics)
+    table = pd.DataFrame([row])
     if path.exists() and path.stat().st_size > 0:
-        row = pd.concat([pd.read_csv(path), row], ignore_index=True)
-    row.to_csv(path, index=False)
+        old = pd.read_csv(path)
+        old = old[old["model"] != name]
+        table = pd.concat([old, table], ignore_index=True)
+    table.to_csv(path, index=False)

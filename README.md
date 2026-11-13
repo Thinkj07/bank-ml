@@ -13,19 +13,16 @@ Notebook chính: [pre_processing.ipynb](./pre_processing.ipynb)
 
 ## 2. Nội dung thực hiện
 
-Notebook gồm các bước:
+Notebook và script gồm các bước:
 
-1. Tải dữ liệu từ `bank-full.csv`
-2. Kiểm tra cấu trúc dữ liệu, kích thước và kiểu dữ liệu.
-3. Kiểm tra giá trị thiếu `NaN/Null` và giá trị ẩn `unknown`.
-4. Xử lý dữ liệu trùng lặp.
-5. Phát hiện và capping ngoại lệ bằng phương pháp IQR.
-6. Mã hóa biến phân loại
-7. Chuẩn hóa các biến số bằng `RobustScaler`.
-8. Phân tích tương quan và đa cộng tuyến.
-9. Tách dữ liệu train/test với `stratify=y`.
-10. Cân bằng lớp bằng SMOTE chỉ trên tập train để tránh Data Leakage.
-11. Xuất dữ liệu đã xử lý ra file CSV.
+1. Tải dữ liệu từ `bank-full.csv`, kiểm tra kiểu dữ liệu và xóa trùng lặp (`drop_duplicates()`).
+2. Ánh xạ tĩnh (mapping) các biến nhị phân (`default`, `housing`, `loan`, `y`), thứ tự (`education`) và thời gian (`month`).
+3. Tách dữ liệu `train_test_split(test_size=0.2, random_state=42, stratify=y)` sớm nhất để ngăn ngừa rò rỉ dữ liệu (Data Leakage).
+4. Phân tích khám phá (EDA) và trực quan hóa tỷ lệ missing/unknown và boxplot ngoại lệ chỉ trên tập Train.
+5. Xây dựng `ColumnTransformer` tích hợp `SimpleImputer`, `IQRCapper` (custom transformer), `RobustScaler`, và `OneHotEncoder`: fit trên tập Train, sau đó transform cho cả Train và Test.
+6. Trực quan hóa phân phối, số chiều sau mã hóa và ma trận tương quan chỉ dựa trên tập Train.
+7. Cân bằng lớp bằng `SMOTE` chỉ áp dụng trên tập Train đã xử lý (`X_train_processed`, `y_train`). Giữ nguyên phân phối thực tế của tập Test.
+8. Xuất dữ liệu đã xử lý sạch ra các file CSV riêng biệt (`train_processed.csv`, `train_resampled.csv`, `test_processed.csv`).
 
 ## 3. Cấu trúc thư mục
 
@@ -34,13 +31,15 @@ ml_assign/
 ├── bank-full.csv
 ├── pre_processing.ipynb
 ├── pre_processing.py
-├── cleaned_bank_data.csv
+├── train_processed.csv
+├── train_resampled.csv
+├── test_processed.csv
 ├── outputs/
 │   └── plots/
 └── README.md
 ```
 
-`cleaned_bank_data.csv` được tạo sau khi chạy notebook thành công.
+`train_processed.csv`, `train_resampled.csv`, và `test_processed.csv` được tạo sau khi chạy pipeline thành công.
 
 ## 4. Yêu cầu môi trường
 
@@ -137,22 +136,19 @@ Không áp dụng SMOTE lên `X_test` hoặc `y_test`. Tập test phải giữ p
 
 ## 8. Kết quả đầu ra
 
-Sau khi chạy thành công, notebook tạo:
+Sau khi chạy thành công, pipeline tạo các file dữ liệu sạch sẵn sàng cho bước huấn luyện:
 
-```text
-cleaned_bank_data.csv
-```
+- `train_processed.csv`: Tập train (36,168 dòng x 35 cột) đã qua pipeline tiền xử lý (giữ nguyên phân phối mất cân bằng).
+- `train_resampled.csv`: Tập train (63,874 dòng x 35 cột) đã được cân bằng lớp 50:50 bằng SMOTE.
+- `test_processed.csv`: Tập test (9,043 dòng x 35 cột) được biến đổi bằng các tham số học từ tập train, giữ nguyên nhãn gốc để đánh giá khách quan.
 
-File này chứa dữ liệu đã:
+Các file dữ liệu đã:
+- Xử lý giá trị thiếu bằng median/mode học từ train.
+- Capping các giá trị ngoại lệ theo ngưỡng IQR học từ train.
+- Mã hóa One-Hot các biến danh mục và ánh xạ các biến thứ tự/nhị phân.
+- Chuẩn hóa các biến số bằng `RobustScaler` học từ train.
 
-- Xử lý giá trị thiếu.
-- Giữ lại các nhóm `unknown` có ý nghĩa.
-- Xử lý dòng trùng lặp.
-- Capping một số ngoại lệ theo IQR.
-- Mã hóa biến phân loại.
-- Chuẩn hóa biến số.
-
-Nếu `cleaned_bank_data.csv` đang mở trong Excel hoặc chương trình khác, hãy đóng file trước khi chạy cell xuất dữ liệu để tránh lỗi `PermissionError`.
+Nếu bất kỳ file CSV nào đang mở trong Excel hoặc chương trình khác, hãy đóng file trước khi chạy để tránh lỗi `PermissionError`.
 
 Các biểu đồ được xuất dưới dạng PNG với tên theo thứ tự pipeline:
 

@@ -1,5 +1,4 @@
 {
-  "C": 0.19069966103000435,
-  "class_weight": null,
-  "penalty": "l2"
+  "C": 0.0745934328572655,
+  "class_weight": null
 }

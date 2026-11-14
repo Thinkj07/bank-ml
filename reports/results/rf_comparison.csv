@@ -1,0 +1,4 @@
+model,accuracy,precision,recall,f1,pr_auc,roc_auc
+rf_baseline,0.8915,0.6097,0.2023,0.3038,0.4133,0.781
+rf_tuned,0.8686,0.4466,0.5142,0.478,0.4533,0.8013
+rf_tuned_threshold,0.8623,0.4305,0.5473,0.4819,0.4533,0.8013

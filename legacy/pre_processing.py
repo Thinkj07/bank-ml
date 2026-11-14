@@ -22,11 +22,15 @@ from sklearn.preprocessing import OneHotEncoder, RobustScaler
 
 RANDOM_STATE = 42
 PROJECT_DIR = Path(__file__).resolve().parent
-INPUT_PATH = PROJECT_DIR / "bank-full.csv"
-TRAIN_PROCESSED_PATH = PROJECT_DIR / "train_processed.csv"
-TRAIN_RESAMPLED_PATH = PROJECT_DIR / "train_resampled.csv"
-TEST_PROCESSED_PATH = PROJECT_DIR / "test_processed.csv"
-PLOT_DIR = PROJECT_DIR / "outputs" / "plots"
+PROJECT_ROOT = PROJECT_DIR.parent
+INPUT_PATH = PROJECT_ROOT / "data" / "raw" / "bank-full.csv"
+PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
+RESAMPLED_DIR = PROJECT_ROOT / "data" / "resampled"
+PLOT_DIR = PROJECT_ROOT / "reports" / "figures"
+
+TRAIN_PROCESSED_PATH = PROCESSED_DIR / "train_processed.csv"
+TRAIN_RESAMPLED_PATH = RESAMPLED_DIR / "train_resampled.csv"
+TEST_PROCESSED_PATH = PROCESSED_DIR / "test_processed.csv"
 
 pd.set_option("display.max_columns", None)
 sns.set_theme(style="whitegrid", palette="Set2")
@@ -77,6 +81,7 @@ def save_plot(filename: str) -> None:
 
 def safe_to_csv(df: pd.DataFrame, path: Path) -> Path:
     """Save DataFrame to CSV, handling file lock gracefully."""
+    path.parent.mkdir(parents=True, exist_ok=True)
     try:
         df.to_csv(path, index=False)
         return path
@@ -113,6 +118,11 @@ def main() -> None:
     print(f"[TRÙNG LẶP] Số dòng trùng lặp: {duplicate_count:,}")
     data = data.drop_duplicates().reset_index(drop=True)
     print(f"[TRÙNG LẶP] Kích thước sau drop_duplicates: {data.shape[0]:,} dòng x {data.shape[1]} cột")
+
+    # Loại bỏ cột duration (không còn dùng duration nữa)
+    if "duration" in data.columns:
+        data = data.drop(columns=["duration"])
+        print(f"[LOẠI BỎ] Đã loại bỏ cột duration. Kích thước hiện tại: {data.shape[0]:,} dòng x {data.shape[1]} cột")
 
     # Áp dụng các phép ánh xạ cố định (không phụ thuộc phân phối dữ liệu)
     for column in ["default", "housing", "loan", "y"]:
@@ -204,22 +214,20 @@ def main() -> None:
         "age",
         "balance",
         "day",
-        "duration",
         "campaign",
         "pdays",
         "previous",
     ]
-    capping_columns = ["age", "balance", "day", "duration", "campaign"]
+    capping_columns = ["age", "balance", "day", "campaign"]
     other_numeric_columns = ["pdays", "previous"]
     categorical_columns = ["job", "marital", "contact", "poutcome"]
 
     # Boxplot các biến số trên tập Train trước khi capping
-    fig, axes = plt.subplots(2, 4, figsize=(16, 8))
+    fig, axes = plt.subplots(2, 3, figsize=(15, 8))
     for axis, column in zip(axes.flat, numeric_columns):
         sns.boxplot(y=X_train[column], ax=axis, color="#72B7B2")
         axis.set_title(f"Trước xử lý: {column}")
         axis.set_ylabel(column)
-    axes.flat[-1].axis("off")
     fig.suptitle("Boxplot các biến số trước khi cắt ngọn ngoại lệ (Chỉ tập Train)", fontsize=15)
     plt.tight_layout()
     save_plot("02_outliers_before_capping.png")
@@ -302,12 +310,11 @@ def main() -> None:
         X_train[capping_columns].to_numpy(dtype=float), capper.lower_, capper.upper_
     )
 
-    fig, axes = plt.subplots(2, 4, figsize=(16, 8))
+    fig, axes = plt.subplots(2, 3, figsize=(15, 8))
     for axis, column in zip(axes.flat, numeric_columns):
         sns.boxplot(y=X_train_capped[column], ax=axis, color="#F2CF5B")
         axis.set_title(f"Sau xử lý: {column}")
         axis.set_ylabel(column)
-    axes.flat[-1].axis("off")
     fig.suptitle("Boxplot các biến số sau khi capping theo IQR (Chỉ tập Train)", fontsize=15)
     plt.tight_layout()
     save_plot("03_outliers_after_capping.png")
@@ -341,7 +348,7 @@ def main() -> None:
     print("[SCALING] Độ lệch của các biến số (Tập Train):")
     display(skewness.to_frame("skewness"))
 
-    fig, axes = plt.subplots(len(numeric_columns), 2, figsize=(14, 22))
+    fig, axes = plt.subplots(len(numeric_columns), 2, figsize=(14, 18))
     for row, column in enumerate(numeric_columns):
         sns.histplot(X_train[column], kde=True, ax=axes[row, 0], color="#4C78A8")
         axes[row, 0].set_title(f"{column} - trước scaling")

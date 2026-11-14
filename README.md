@@ -68,7 +68,7 @@ Kết quả được ghi vào `reports/results/results.csv`, dùng chung để s
 
 - Không commit trực tiếp lên `main`. Mỗi người làm trên nhánh riêng (`feat/a-preprocessing`, `feat/b-logreg`, `feat/c-rf`, `feat/d-advanced`) và mở Pull Request cho người khác review.
 - Cài `nbstripout` một lần để notebook không lưu output: `nbstripout --install`.
-- Mô hình mới thêm vào `src/models/<ten>.py` với hàm `build(**params)`.
+- Mô hình mới thêm vào `src/models/<ten>.py` với hàm `build(...)` trả về mô hình chưa huấn luyện, cùng hàm `search_space()` cho tuning.
 - Metric chính: F1 của lớp dương, báo thêm precision, recall, PR-AUC, ROC-AUC.
 
 ## Ghi chú về `duration`

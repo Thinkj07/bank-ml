@@ -1,0 +1,12 @@
+{
+  "best_params": {
+    "l2_regularization": 7.8662169812668425,
+    "learning_rate": 0.06162682089644249,
+    "max_depth": null,
+    "max_iter": 140,
+    "max_leaf_nodes": 36,
+    "min_samples_leaf": 34
+  },
+  "cv_pr_auc": 0.4477,
+  "threshold": 0.19914693288991875
+}

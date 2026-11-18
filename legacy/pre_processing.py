@@ -1,9 +1,3 @@
-"""Bank Marketing data preprocessing pipeline without Data Leakage.
-
-Run from the project directory:
-    python pre_processing.py
-"""
-
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -37,8 +31,6 @@ sns.set_theme(style="whitegrid", palette="Set2")
 
 
 class IQRCapper(BaseEstimator, TransformerMixin):
-    """Chỉ học ngưỡng Q1, Q3 từ tập train và áp dụng clip cho cả train/test."""
-
     def __init__(self, factor: float = 1.5) -> None:
         self.factor = factor
 
@@ -66,12 +58,10 @@ class IQRCapper(BaseEstimator, TransformerMixin):
 
 
 def print_section(step: str, title: str) -> None:
-    """Print a consistently formatted pipeline section heading."""
     print(f"\n{'=' * 72}\nBƯỚC {step}: {title}\n{'=' * 72}")
 
 
 def save_plot(filename: str) -> None:
-    """Save the current figure in the dedicated plots directory."""
     PLOT_DIR.mkdir(parents=True, exist_ok=True)
     output_path = PLOT_DIR / filename
     plt.savefig(output_path, dpi=150, bbox_inches="tight")
@@ -80,7 +70,6 @@ def save_plot(filename: str) -> None:
 
 
 def safe_to_csv(df: pd.DataFrame, path: Path) -> Path:
-    """Save DataFrame to CSV, handling file lock gracefully."""
     path.parent.mkdir(parents=True, exist_ok=True)
     try:
         df.to_csv(path, index=False)
@@ -96,10 +85,6 @@ def safe_to_csv(df: pd.DataFrame, path: Path) -> Path:
 
 
 def main() -> None:
-    """Run all preprocessing steps without Data Leakage."""
-    # =========================================================================
-    # BƯỚC 1: Tải dữ liệu & làm sạch tĩnh (Trước khi chia train/test)
-    # =========================================================================
     print_section("1", "Tải dữ liệu & làm sạch tĩnh (Trước khi chia train/test)")
     data = pd.read_csv(INPUT_PATH, sep=";")
 
@@ -113,18 +98,15 @@ def main() -> None:
     print("[DỮ LIỆU] Kiểu dữ liệu từng cột:")
     display(data.dtypes.to_frame("dtype"))
 
-    # Xóa dòng trùng lặp
     duplicate_count = int(data.duplicated().sum())
     print(f"[TRÙNG LẶP] Số dòng trùng lặp: {duplicate_count:,}")
     data = data.drop_duplicates().reset_index(drop=True)
     print(f"[TRÙNG LẶP] Kích thước sau drop_duplicates: {data.shape[0]:,} dòng x {data.shape[1]} cột")
 
-    # Loại bỏ cột duration (không còn dùng duration nữa)
     if "duration" in data.columns:
         data = data.drop(columns=["duration"])
         print(f"[LOẠI BỎ] Đã loại bỏ cột duration. Kích thước hiện tại: {data.shape[0]:,} dòng x {data.shape[1]} cột")
 
-    # Áp dụng các phép ánh xạ cố định (không phụ thuộc phân phối dữ liệu)
     for column in ["default", "housing", "loan", "y"]:
         data[column] = data[column].map({"no": 0, "yes": 1}).astype("int8")
 
@@ -150,9 +132,6 @@ def main() -> None:
     ).astype("int8")
     print("[ÁNH XẠ] Đã map tĩnh các cột: default, housing, loan, y, education, month")
 
-    # =========================================================================
-    # BƯỚC 2: Chia tập dữ liệu (train_test_split sớm)
-    # =========================================================================
     print_section("2", "Chia tập dữ liệu (train_test_split sớm để chống rò rỉ dữ liệu)")
     X = data.drop(columns="y")
     y = data["y"]
@@ -170,9 +149,6 @@ def main() -> None:
     print(f"[CHIA TẬP] y_train: {y_train.shape[0]:,} nhãn")
     print(f"[CHIA TẬP] y_test:  {y_test.shape[0]:,} nhãn")
 
-    # =========================================================================
-    # BƯỚC 3: EDA & Trực quan hóa (Chỉ thực hiện trên tập Train)
-    # =========================================================================
     print_section("3", "EDA & Trực quan hóa (Chỉ thực hiện trên tập Train)")
     null_count = X_train.isna().sum()
     unknown_count = X_train.eq("unknown").sum()
@@ -222,7 +198,6 @@ def main() -> None:
     other_numeric_columns = ["pdays", "previous"]
     categorical_columns = ["job", "marital", "contact", "poutcome"]
 
-    # Boxplot các biến số trên tập Train trước khi capping
     fig, axes = plt.subplots(2, 3, figsize=(15, 8))
     for axis, column in zip(axes.flat, numeric_columns):
         sns.boxplot(y=X_train[column], ax=axis, color="#72B7B2")
@@ -232,9 +207,6 @@ def main() -> None:
     plt.tight_layout()
     save_plot("02_outliers_before_capping.png")
 
-    # =========================================================================
-    # BƯỚC 4: Xây dựng ColumnTransformer & Pipeline (Fit trên Train, Transform trên Test)
-    # =========================================================================
     print_section(
         "4", "Xây dựng ColumnTransformer & Pipeline (Fit trên Train, Transform trên Test)"
     )
@@ -285,14 +257,12 @@ def main() -> None:
 
     preprocessor.set_output(transform="pandas")
 
-    # Fit và transform trên tập Train, CHỈ transform trên tập Test
     X_train_processed = preprocessor.fit_transform(X_train)
     X_test_processed = preprocessor.transform(X_test)
 
     print(f"[TRANSFORM] Kích thước X_train sau pipeline: {X_train_processed.shape}")
     print(f"[TRANSFORM] Kích thước X_test sau pipeline:  {X_test_processed.shape}")
 
-    # Trích xuất thông số capper đã học từ tập Train để báo cáo & trực quan hóa
     capper = preprocessor.named_transformers_["num_capped"].named_steps["capper"]
     outlier_summary = {}
     for idx, column in enumerate(capping_columns):
@@ -304,7 +274,6 @@ def main() -> None:
     print("[NGOẠI LỆ] Số ngoại lệ trên tập Train trước capping (ngưỡng học từ Train):")
     display(pd.Series(outlier_summary, name="số ngoại lệ trước capping"))
 
-    # Boxplot các biến số sau khi capping theo IQR (chỉ tập Train)
     X_train_capped = X_train[numeric_columns].copy()
     X_train_capped[capping_columns] = np.clip(
         X_train[capping_columns].to_numpy(dtype=float), capper.lower_, capper.upper_
@@ -319,7 +288,6 @@ def main() -> None:
     plt.tight_layout()
     save_plot("03_outliers_after_capping.png")
 
-    # Trực quan hóa số lượng đặc trưng trước & sau One-Hot Encoding
     features_before_encoding = X_train.shape[1]
     features_after_encoding = X_train_processed.shape[1]
     print(f"[ENCODING] Số cột trước mã hóa: {features_before_encoding}")
@@ -343,7 +311,6 @@ def main() -> None:
     plt.tight_layout()
     save_plot("04_features_before_after_encoding.png")
 
-    # Trực quan hóa phân phối trước & sau RobustScaler trên tập Train
     skewness = X_train[numeric_columns].skew().sort_values(ascending=False)
     print("[SCALING] Độ lệch của các biến số (Tập Train):")
     display(skewness.to_frame("skewness"))
@@ -369,7 +336,6 @@ def main() -> None:
         ]
     )
 
-    # Phân tích tương quan & đa cộng tuyến (chỉ trên tập Train đã xử lý kết hợp y_train)
     train_for_corr = pd.concat([X_train_processed, y_train], axis=1)
     correlation_matrix = train_for_corr.corr(numeric_only=True)
     target_correlation = correlation_matrix["y"].drop("y").sort_values(
@@ -404,9 +370,6 @@ def main() -> None:
     print("[ĐA CỘNG TUYẾN] 10 cặp có tương quan tuyệt đối cao nhất (Tập Train):")
     display(strong_pairs.head(10))
 
-    # =========================================================================
-    # BƯỚC 5: Xử lý mất cân bằng lớp (SMOTE duy nhất trên tập Train)
-    # =========================================================================
     print_section("5", "Xử lý mất cân bằng lớp (SMOTE duy nhất trên tập Train)")
     print("[MẤT CÂN BẰNG] Phân phối y_train ban đầu:")
     display(
@@ -478,9 +441,6 @@ def main() -> None:
         .rename("percentage")
     )
 
-    # =========================================================================
-    # BƯỚC 6: Xuất dữ liệu đầu ra
-    # =========================================================================
     print_section("6", "Xuất dữ liệu sạch & chuẩn hóa tách biệt train/test")
     train_processed = pd.concat([X_train_processed, y_train], axis=1)
     train_resampled = pd.concat([X_train_resampled, y_train_resampled], axis=1)

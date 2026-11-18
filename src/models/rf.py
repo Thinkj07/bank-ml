@@ -1,11 +1,7 @@
-"""Random Forest cho bài toán Bank Marketing (thành viên C)."""
-
 import numpy as np
 from scipy.stats import randint
 from sklearn.ensemble import RandomForestClassifier
 
-# Tham số mặc định. Truyền params vào build() sẽ ghi đè các giá trị này
-# (bản cũ truyền trùng n_estimators/class_weight sẽ báo lỗi TypeError).
 DEFAULTS = {
     "n_estimators": 300,
     "class_weight": "balanced",
@@ -13,7 +9,6 @@ DEFAULTS = {
     "random_state": 42,
 }
 
-# Không gian tìm kiếm cho RandomizedSearchCV.
 PARAM_DISTRIBUTIONS = {
     "n_estimators": randint(100, 501),
     "max_depth": [None, 8, 12, 16, 20, 25, 30],
@@ -29,11 +24,6 @@ def build(**params):
 
 
 class ThresholdedModel:
-    """Bọc một mô hình đã fit, dự đoán lớp 1 khi xác suất >= threshold.
-
-    Ngưỡng được chọn trên dự đoán out-of-fold của tập train, không dùng tập test.
-    """
-
     def __init__(self, model, threshold=0.5):
         self.model = model
         self.threshold = float(threshold)
@@ -50,7 +40,6 @@ class ThresholdedModel:
 
 
 def best_f1_threshold(y_true, proba):
-    """Ngưỡng cho F1 cao nhất, quét từ 0.05 đến 0.95."""
     y_true = np.asarray(y_true)
     thresholds = np.round(np.arange(0.05, 0.951, 0.01), 2)
     scores = []

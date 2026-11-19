@@ -1,0 +1,4 @@
+model,accuracy,precision,recall,f1,pr_auc,roc_auc,threshold,top10_calls,top10_hits
+rf_class_weight,0.8675,0.4438,0.5227,0.48,0.4533,0.8013,0.4928,904,453
+rf_no_class_weight,0.8652,0.4396,0.5539,0.4902,0.4607,0.8028,0.207,904,465
+rf_smote,0.8608,0.4146,0.4612,0.4367,0.3938,0.7745,0.428,904,414

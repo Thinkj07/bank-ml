@@ -1,0 +1,20 @@
+{
+  "n_features": 15,
+  "features": [
+    "poutcome_success",
+    "month",
+    "day",
+    "contact_unknown",
+    "pdays",
+    "housing",
+    "campaign",
+    "age",
+    "contact_cellular",
+    "balance",
+    "loan",
+    "marital_married",
+    "poutcome_failure",
+    "previous",
+    "education"
+  ]
+}

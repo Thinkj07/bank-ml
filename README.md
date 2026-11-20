@@ -6,8 +6,8 @@ Dự đoán khách hàng có đăng ký tiền gửi kỳ hạn hay không (bi�
 
 | Họ tên | MSSV | Phần phụ trách |
 |---|---|---|
-| Nguyễn Đình Khang | [điền MSSV] | Phần D: Gradient Boosting, feature selection, MLP, so sánh mô hình |
-| Nguyễn Tuấn Huy | [điền MSSV] | Phần B: Logistic Regression, SVM |
+| Nguyễn Đình Khang | 2052519 | Phần D: Gradient Boosting, feature selection, MLP, so sánh mô hình |
+| Nguyễn Tuấn Huy | 2311223 | Phần B: Logistic Regression, SVM |
 | [điền họ tên] | [điền MSSV] | Phần A: dữ liệu và tiền xử lý |
 | [điền họ tên] | [điền MSSV] | Phần C: Random Forest |
 
